@@ -1,0 +1,8 @@
+server/final_data
+server/processed_data
+server/venv
+server/__pycache__
+server/data
+server/validation_data.csv
+server/training_data.csv
+server/testing_data.csv
