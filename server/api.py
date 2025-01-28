@@ -17,7 +17,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
 
 # Constants
-BUFFER_SIZE = 30
+BUFFER_SIZE = 100
 EXPECTED_DIMENSIONS = (256, 256)
 
 @dataclass
