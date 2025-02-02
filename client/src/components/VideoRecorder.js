@@ -9,9 +9,19 @@ const VideoRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [exercise, setExercise] = useState(""); // Store detected exercise name
   const intervalRef = useRef(null);
   const streamRef = useRef(null);
   const wsRef = useRef(null);
+
+  // Mapping exercise class numbers to exercise names
+  const EXERCISE_CLASSES = {
+    0: "Squat",
+    1: "Lunge",
+    2: "Push-Up",
+    3: "Deadlift",
+    4: "Jumping Jack"
+  };
 
   const reconnectWebSocket = () => {
     wsRef.current = new WebSocket("ws://localhost:8000/ws");
@@ -22,10 +32,12 @@ const VideoRecorder = () => {
 
     wsRef.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      
       if (data.feedback) {
         setFeedback(data.feedback);
       }
 
+      // Handle annotated frame with pose landmarks
       if (data.annotated_frame) {
         const img = new Image();
         img.src = "data:image/jpeg;base64," + data.annotated_frame;
@@ -39,6 +51,11 @@ const VideoRecorder = () => {
           ctx.drawImage(img, 0, 0, overlayCanvas.width, overlayCanvas.height);
         };
       }
+
+      // Handle classified exercise name
+      if (data.exercise_class !== undefined) {
+        setExercise(EXERCISE_CLASSES[data.exercise_class] || "Unknown Exercise");
+      }
     };
 
     wsRef.current.onerror = (error) => {
@@ -47,7 +64,7 @@ const VideoRecorder = () => {
   };
 
   useEffect(() => {
-    reconnectWebSocket();
+    reconnectWebSocket(); // Connect WebSocket on component mount
 
     return () => {
       if (wsRef.current) {
@@ -111,7 +128,7 @@ const VideoRecorder = () => {
 
   const startRecording = () => {
     if (!isCameraOn || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      reconnectWebSocket();
+      reconnectWebSocket(); // Ensure WebSocket is connected
     }
     setIsRecording(true);
     intervalRef.current = setInterval(captureAndSendFrame, 100);
@@ -119,6 +136,7 @@ const VideoRecorder = () => {
 
   const stopRecording = () => {
     setFeedback("");
+    setExercise(""); // Clear exercise display when stopping
     setIsRecording(false);
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -145,6 +163,13 @@ const VideoRecorder = () => {
           <canvas ref={canvasRef} style={{ display: "none" }} />
           <canvas ref={overlayRef} className="absolute top-0 left-0 w-full h-full pointer-events-none" />
         </div>
+
+        {exercise && (
+          <div className="mt-4 text-center">
+            <p className="text-xl font-bold text-blue-600">Detected Exercise: {exercise}</p>
+          </div>
+        )}
+
         <div className="flex justify-center space-x-4 mb-4">
           <button
             onClick={() => (isCameraOn ? stopCamera() : startCamera())}
@@ -175,13 +200,10 @@ const VideoRecorder = () => {
             Stop Capturing
           </button>
         </div>
+
         {feedback && (
           <div className="mt-4 text-center">
-            <p
-              className={`text-lg font-semibold ${
-                feedback === "Position Correct" ? "text-green-600" : "text-red-600"
-              }`}
-            >
+            <p className={`text-lg font-semibold ${feedback === "Position Correct" ? "text-green-600" : "text-red-600"}`}>
               {feedback}
             </p>
           </div>

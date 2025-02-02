@@ -139,20 +139,21 @@ class FrameBuffer:
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     frame_buffer = FrameBuffer(model, scaler)
-    
+
     try:
         while True:
-            data = await websocket.receive_text()
-            packet = json.loads(data)
-
-            if not all(key in packet for key in ["frame", "width", "height"]):
-                print("Invalid frame format")
-                continue
-
             try:
+                data = await websocket.receive_text()
+                packet = json.loads(data)
+
+                if not all(key in packet for key in ["frame", "width", "height"]):
+                    print("Invalid frame format")
+                    continue
+
                 frame_bytes = base64.b64decode(packet["frame"])
                 np_arr = np.frombuffer(frame_bytes, np.uint8)
                 img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
                 if img is None:
                     raise ValueError("Invalid image data")
 
@@ -163,13 +164,16 @@ async def websocket_endpoint(websocket: WebSocket):
                 response_data = frame_buffer.add_frame(img)
                 await websocket.send_text(json.dumps(response_data))
 
+            except WebSocketDisconnect:
+                print("WebSocket disconnected. Stopping frame processing.")
+                break  # Exit loop when the client disconnects
+
             except Exception as e:
                 print(f"🚨 Frame processing error: {str(e)}")
                 continue
-    except WebSocketDisconnect:
-        print("WebSocket disconnected")
+
     finally:
         try:
             await websocket.close()
         except RuntimeError:
-            print("WebSocket already closed")
+            print("WebSocket already closed.")
