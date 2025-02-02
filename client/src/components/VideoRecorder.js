@@ -16,11 +16,10 @@ const VideoRecorder = () => {
 
   // Mapping exercise class numbers to exercise names
   const EXERCISE_CLASSES = {
-    0: "Squat",
-    1: "Lunge",
+    0: "Shoulder Flexion",
+    1: "Horizontal Weight Opening",
     2: "Push-Up",
-    3: "Deadlift",
-    4: "Jumping Jack"
+    3: "Elastic Rotation"
   };
 
   const reconnectWebSocket = () => {
