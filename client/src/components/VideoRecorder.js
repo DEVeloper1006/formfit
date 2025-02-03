@@ -18,8 +18,8 @@ const VideoRecorder = () => {
   const EXERCISE_CLASSES = {
     0: "Shoulder Flexion",
     1: "Horizontal Weight Opening",
-    2: "Push-Up",
-    3: "Elastic Rotation"
+    2: "Elastic Rotation",
+    3: "Circular Pendulum"
   };
 
   const reconnectWebSocket = () => {
